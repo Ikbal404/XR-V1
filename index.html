@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Three.js Stable Loader</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+        color: white;
+        font-family: monospace;
+      }
+      #errorBox {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(255, 0, 0, 0.9);
+        color: white;
+        padding: 12px;
+        font-size: 14px;
+        z-index: 9999;
+        white-space: pre-wrap;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="errorBox"></div>
+
+    <script>
+      const errorBox = document.getElementById('errorBox');
+
+      function showError(msg, err) {
+        errorBox.style.display = 'block';
+        errorBox.textContent = `❌ ${msg}\n${err?.message || err}`;
+        console.error(err);
+      }
+
+      // ✅ Load Three.js secara dinamis dan tunggu sampai siap
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = src;
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('Gagal memuat: ' + src));
+          document.head.appendChild(script);
+        });
+      }
+
+      (async () => {
+        try {
+          // Tunggu hingga CDN Three.js & OrbitControls siap
+          await loadScript('https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.min.js');
+          await loadScript('https://cdn.jsdelivr.net/npm/three@0.165.0/examples/js/controls/OrbitControls.min.js');
+
+          if (typeof THREE === 'undefined') throw new Error('THREE masih undefined setelah load.');
+
+          // === Scene setup ===
+          const scene = new THREE.Scene();
+          const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+          camera.position.z = 3;
+
+          const renderer = new THREE.WebGLRenderer({ antialias: true });
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          document.body.appendChild(renderer.domElement);
+
+          const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+          // === Cube ===
+          const geometry = new THREE.BoxGeometry();
+          const material = new THREE.MeshStandardMaterial({ color: 0x00aaff });
+          const cube = new THREE.Mesh(geometry, material);
+          scene.add(cube);
+
+          // === Light ===
+          const light = new THREE.DirectionalLight(0xffffff, 1);
+          light.position.set(5, 5, 5);
+          scene.add(light);
+          scene.add(new THREE.AmbientLight(0x404040));
+
+          // === Animation ===
+          function animate() {
+            requestAnimationFrame(animate);
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+            controls.update();
+            renderer.render(scene, camera);
+          }
+          animate();
+
+          window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+          });
+        } catch (err) {
+          showError('Failed to initialize scene', err);
+        }
+      })();
+    </script>
+  </body>
+</html>
