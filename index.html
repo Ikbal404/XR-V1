@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Three.js Cube (with OrbitControls + Error Handling)</title>
+    <style>
+      body { margin: 0; background: #111; color: white; font-family: monospace; overflow: hidden; }
+      canvas { display: block; }
+      #errorBox {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(255, 0, 0, 0.9);
+        color: white;
+        padding: 12px;
+        font-size: 14px;
+        z-index: 9999;
+        white-space: pre-wrap;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="errorBox"></div>
+
+    <script type="module">
+      const errorBox = document.getElementById('errorBox');
+
+      // === Global error handlers ===
+      window.addEventListener('error', (event) => {
+        errorBox.style.display = 'block';
+        errorBox.textContent =
+          `⚠️ JavaScript Error:\n${event.message}\n\nFile: ${event.filename}:${event.lineno}`;
+      });
+
+      window.addEventListener('unhandledrejection', (event) => {
+        errorBox.style.display = 'block';
+        errorBox.textContent =
+          `⚠️ Unhandled Promise Rejection:\n${event.reason}`;
+      });
+
+      // === Try to import modules safely ===
+      (async () => {
+        try {
+          const THREE = await import('https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js');
+          const { OrbitControls } = await import('https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/OrbitControls.js');
+
+          // === Setup scene ===
+          const scene = new THREE.Scene();
+
+          // Camera
+          const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+          camera.position.z = 3;
+
+          // Renderer
+          const renderer = new THREE.WebGLRenderer({ antialias: true });
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          document.body.appendChild(renderer.domElement);
+
+          // Orbit controls
+          const controls = new OrbitControls(camera, renderer.domElement);
+          controls.enableDamping = true;
+          controls.dampingFactor = 0.05;
+          controls.enablePan = false;
+          controls.minDistance = 1;
+          controls.maxDistance = 10;
+
+          // Cube
+          const geometry = new THREE.BoxGeometry();
+          const material = new THREE.MeshStandardMaterial({ color: 0x0077ff });
+          const cube = new THREE.Mesh(geometry, material);
+          scene.add(cube);
+
+          // Lights
+          const light = new THREE.DirectionalLight(0xffffff, 1);
+          light.position.set(5, 5, 5);
+          scene.add(light);
+          const ambient = new THREE.AmbientLight(0x404040);
+          scene.add(ambient);
+
+          // Animate
+          function animate() {
+            requestAnimationFrame(animate);
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+            controls.update();
+            renderer.render(scene, camera);
+          }
+          animate();
+
+          // Responsive resize
+          window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+          });
+        } catch (err) {
+          errorBox.style.display = 'block';
+          errorBox.textContent = `❌ Failed to initialize Three.js:\n${err.message}\n\n${err.stack}`;
+        }
+      })();
+    </script>
+  </body>
+</html>
