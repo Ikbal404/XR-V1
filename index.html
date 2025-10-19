@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kotak 3D dengan Cahaya (Phong Material)</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #f0f0f0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script type="module">
+        // Import Three.js dari CDN
+        import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+
+        // 1. Scene
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xcccccc); // Latar belakang abu-abu muda
+
+        // 2. Camera
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 3;
+
+        // 3. Renderer
+        const renderer = new THREE.WebGLRenderer({ antialias: true }); // antialias untuk grafis yang lebih halus
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // 4. Geometry dan Material
+        const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5); // Ukuran kotak sedikit lebih besar
+        
+        // Menggunakan MeshPhongMaterial: Material ini membutuhkan cahaya untuk menampilkan warna dan pantulan.
+        const material = new THREE.MeshPhongMaterial({ 
+            color: 0xcc0000, // Warna merah
+            specular: 0xffffff, // Warna pantulan (pantulan putih)
+            shininess: 30 // Tingkat kilauan
+        }); 
+        
+        const box = new THREE.Mesh(geometry, material);
+        scene.add(box);
+
+        // 5. Pencahayaan (Penting untuk Phong Material)
+        
+        // Cahaya Titik (Spot/Point Light)
+        const pointLight = new THREE.PointLight(0xffffff, 200); // Warna putih, intensitas 200
+        pointLight.position.set(5, 5, 5); // Posisikan cahaya
+        scene.add(pointLight);
+
+        // Cahaya Ambient (Cahaya merata)
+        const ambientLight = new THREE.AmbientLight(0x404040, 3); // Cahaya lembut untuk menerangi sisi gelap
+        scene.add(ambientLight);
+
+        // 6. Loop Animasi
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotasi Kotak
+            box.rotation.x += 0.005;
+            box.rotation.y += 0.008;
+
+            renderer.render(scene, camera);
+        }
+
+        // Tangani perubahan ukuran jendela
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Mulai Animasi
+        animate();
+    </script>
+</body>
+</html>
